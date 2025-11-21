@@ -1,35 +1,43 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+// src/App.jsx
+import React, { useRef, useState } from "react";
+import Layout from "./components/Layout";
+import PDFViewer from "./components/PDFViewer";
+import AnalysisPanel from "./components/AnalysisPanel";
+import { REFERENCES } from "./config/references";
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const pdfRef = useRef(null);
+  const [activeRefId, setActiveRefId] = useState(null);
+  const [lastHighlightStatus, setLastHighlightStatus] = useState(null);
+
+  const handleRefClick = (refId) => {
+    setActiveRefId(refId);
+    setLastHighlightStatus(null);
+
+    const refConfig = REFERENCES[refId];
+
+    // For now, only [3] actually highlights something in the PDF
+    if (refConfig && refConfig.searchText && pdfRef.current) {
+      const found = pdfRef.current.highlightByText(refConfig.searchText);
+      setLastHighlightStatus(found ? "ok" : "not-found");
+    } else {
+      // Non-PDF-impacting references: just update UI
+      setLastHighlightStatus(null);
+    }
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <Layout
+      left={<PDFViewer ref={pdfRef} />}
+      right={
+        <AnalysisPanel
+          activeRefId={activeRefId}
+          onRefClick={handleRefClick}
+          lastHighlightStatus={lastHighlightStatus}
+        />
+      }
+    />
+  );
+};
 
-export default App
+export default App;
